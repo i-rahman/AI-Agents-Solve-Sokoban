@@ -154,11 +154,16 @@ class GeneticAgent(Agent):
 
         #initialize the population with sequences of 50 actions (random movements)
         population = []
+        
         for p in range(popSize):
             bestSeq = []
+            # print(random.choice(directions))
             for i in range(seqLen):
                 bestSeq.append(random.choice(directions))
+
+            # print(bestSeq)
             population.append(bestSeq)
+            
 
         #mutate until the iterations runs out or a solution sequence is found
         while (iterations < maxIterations):
@@ -166,61 +171,80 @@ class GeneticAgent(Agent):
 
             #1. evaluate the population
             evaluatedPopulation = []
-
-            for i in range(popSize):
+            for individual in population:
                 individualState = state.clone()
-                for direction in population[i]:
-                    individualState.update[direction['x'], direction['y']]
+                for direction in individual:
+                    individualState.update(direction['x'], direction['y'])
+                if(individualState.checkWin()):
+                    for j in range(seqLen):
+                        bestSeq[j] = individual[j]
+                        return bestSeq
                 fitness = getHeuristic(individualState)
-                evaluatedPopulation.append((fitness, population[i]))
+                evaluatedPopulation.append((fitness, individual))
 
           
             #2. sort the population by fitness (low to high)
-            evaluatedPopulation = sorted(evaluatedPopulation, key=fitness)
+            evaluatedPopulation = sorted(evaluatedPopulation, key=(lambda x: x[0]))
                      
 
             #2.1 save bestSeq from best evaluated sequence
             bestSeq = []
-            for i in range(popSize/2):
-                bestSeq[i] = population[i][1] 
+            for i in range(seqLen):
+                bestSeq.append(evaluatedPopulation[0][1][i])
 
             #3. generate probabilities for parent selection based on fitness
-            maxRank = popSize
-            l
-
-
-
+            currRank = popSize
+            sumRank = (popSize*(popSize+1))/2
+            probArr = []
+            for i in range(popSize):
+                probArr.append(currRank)
+                currRank = currRank-1
+   
             #4. populate by crossover and mutation
             new_pop = []
             for i in range(int(popSize/2)):
                 #4.1 select 2 parents sequences based on probabilities generated
                 par1 = []
                 par2 = []
+                currSum = 0
+                  
+                randomNum = random.randint(1,sumRank)
+
+                for i in range(len(probArr)):
+                    currSum = currSum+probArr[i]
+                    if(currSum >= randomNum):
+                        for j in range(seqLen):
+                            par1.append(evaluatedPopulation[i][1][j])
                 
-
-
-
-
+                for i in range(len(probArr)):
+                    currSum = currSum+probArr[i]
+                    if(currSum >= randomNum):
+                        for j in range(seqLen):
+                            par2.append(evaluatedPopulation[i][1][j])
+                               
+            
                 #4.2 make a child from the crossover of the two parent sequences
                 offspring = []
 
-                
-
-
+                for i in range(seqLen):
+                    if(random.random()<parentRand):
+                        offspring.append(par1[i])
+                    else:
+                        offspring.append(par2[i])
+    
 
                 #4.3 mutate the child's actions
+                for i in range(seqLen):
+                    if(random.random()<mutRand):
+                        offspring[i] = random.choice(directions)
                 
-
-
-
-
                 #4.4 add the child to the new population
                 new_pop.append(list(offspring))
 
 
             #5. add top half from last population (mu + lambda)
             for i in range(int(popSize/2)):
-
+                new_pop.append(evaluatedPopulation[i][1])
 
 
             #6. replace the old population with the new one
