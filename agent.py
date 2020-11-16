@@ -184,8 +184,8 @@ class GeneticAgent(Agent):
 
           
             #2. sort the population by fitness (low to high)
-            evaluatedPopulation = sorted(evaluatedPopulation, key=(lambda x: x[0]))
-                     
+            # evaluatedPopulation = sorted(evaluatedPopulation, key=(lambda x: x[0]))
+            evaluatedPopulation.sort(key=(lambda x: x[0]))
 
             #2.1 save bestSeq from best evaluated sequence
             bestSeq = []
@@ -193,10 +193,10 @@ class GeneticAgent(Agent):
                 bestSeq.append(evaluatedPopulation[0][1][i])
 
             #3. generate probabilities for parent selection based on fitness
-            currRank = popSize
-            sumRank = (popSize*(popSize+1))/2
+            currRank = 5
+            sumRank = (5*(5+1))/2
             probArr = []
-            for i in range(popSize):
+            for i in range(int(popSize/2)):
                 probArr.append(currRank)
                 currRank = currRank-1
    
@@ -209,34 +209,36 @@ class GeneticAgent(Agent):
                 currSum = 0
                   
                 randomNum = random.randint(1,sumRank)
-
-                for i in range(len(probArr)):
-                    currSum = currSum+probArr[i]
+                for m in range(int(popSize/2)):
+                    currSum = currSum+probArr[m]
                     if(currSum >= randomNum):
-                        for j in range(seqLen):
-                            par1.append(evaluatedPopulation[i][1][j])
+                        for n in range(seqLen):
+                            par1.append(evaluatedPopulation[m][1][n])
+                        break
                 
-                for i in range(len(probArr)):
-                    currSum = currSum+probArr[i]
+                randomNum = random.randint(1,sumRank)
+                for m in range(int(popSize/2)):
+                    currSum = currSum+probArr[m]
                     if(currSum >= randomNum):
-                        for j in range(seqLen):
-                            par2.append(evaluatedPopulation[i][1][j])
+                        for n in range(seqLen):
+                            par2.append(evaluatedPopulation[m][1][n])
+                        break
                                
             
                 #4.2 make a child from the crossover of the two parent sequences
                 offspring = []
 
-                for i in range(seqLen):
+                for seq in range(seqLen):
                     if(random.random()<parentRand):
-                        offspring.append(par1[i])
+                        offspring.append(par1[seq])
                     else:
-                        offspring.append(par2[i])
+                        offspring.append(par2[seq])
     
 
                 #4.3 mutate the child's actions
-                for i in range(seqLen):
+                for seq in range(seqLen):
                     if(random.random()<mutRand):
-                        offspring[i] = random.choice(directions)
+                        offspring[seq] = random.choice(directions)
                 
                 #4.4 add the child to the new population
                 new_pop.append(list(offspring))

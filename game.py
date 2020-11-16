@@ -140,10 +140,10 @@ def ai_play(lvlNumber, bot, maxIter, delayTime=250):
 
 		#show action results
 		screen.state.update(s['x'], s['y'])
-		screen.render()
+		# screen.render()
 
 		#wait a certain time
-		pygame.time.delay(delayTime)
+		# pygame.time.delay(delayTime)
 
 
 	#get status upon finish of the game
