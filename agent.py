@@ -176,15 +176,12 @@ class GeneticAgent(Agent):
                 for direction in individual:
                     individualState.update(direction['x'], direction['y'])
                 if(individualState.checkWin()):
-                    for j in range(seqLen):
-                        bestSeq[j] = individual[j]
-                        return bestSeq
+                    return individual
                 fitness = getHeuristic(individualState)
                 evaluatedPopulation.append((fitness, individual))
 
           
             #2. sort the population by fitness (low to high)
-            # evaluatedPopulation = sorted(evaluatedPopulation, key=(lambda x: x[0]))
             evaluatedPopulation.sort(key=(lambda x: x[0]))
 
             #2.1 save bestSeq from best evaluated sequence
@@ -194,35 +191,43 @@ class GeneticAgent(Agent):
 
             #3. generate probabilities for parent selection based on fitness
             currRank = 5
-            sumRank = (5*(5+1))/2
             probArr = []
             for i in range(int(popSize/2)):
-                probArr.append(currRank)
+                for j in range(currRank):
+                    probArr.append(evaluatedPopulation[i][1])
                 currRank = currRank-1
-   
+     
+            # currRank = 5
+            # sumRank = (5*(5+1))/2
+            # probArr = []
+            # for i in range(int(popSize/2)):
+            #     probArr.append(currRank)
+            #     currRank = currRank-1
             #4. populate by crossover and mutation
             new_pop = []
             for i in range(int(popSize/2)):
                 #4.1 select 2 parents sequences based on probabilities generated
-                par1 = []
-                par2 = []
-                currSum = 0
-                  
-                randomNum = random.randint(1,sumRank)
-                for m in range(int(popSize/2)):
-                    currSum = currSum+probArr[m]
-                    if(currSum >= randomNum):
-                        for n in range(seqLen):
-                            par1.append(evaluatedPopulation[m][1][n])
-                        break
+                par1 = random.choice(probArr)
+                par2 = random.choice(probArr)
+                # par1 = []
+                # par2 = []
+                # currSum = 0
+ 
+                # randomNum = random.randint(1,sumRank)
+                # for m in range(int(popSize/2)):
+                #     currSum = currSum+probArr[m]
+                #     if(currSum >= randomNum):
+                #         for n in range(seqLen):
+                #             par1.append(evaluatedPopulation[m][1][n])
+                #         break
                 
-                randomNum = random.randint(1,sumRank)
-                for m in range(int(popSize/2)):
-                    currSum = currSum+probArr[m]
-                    if(currSum >= randomNum):
-                        for n in range(seqLen):
-                            par2.append(evaluatedPopulation[m][1][n])
-                        break
+                # randomNum = random.randint(1,sumRank)
+                # for m in range(int(popSize/2)):
+                #     currSum = currSum+probArr[m]
+                #     if(currSum >= randomNum):
+                #         for n in range(seqLen):
+                #             par2.append(evaluatedPopulation[m][1][n])
+                #         break
                                
             
                 #4.2 make a child from the crossover of the two parent sequences
@@ -247,7 +252,6 @@ class GeneticAgent(Agent):
             #5. add top half from last population (mu + lambda)
             for i in range(int(popSize/2)):
                 new_pop.append(evaluatedPopulation[i][1])
-
 
             #6. replace the old population with the new one
             population = list(new_pop)
@@ -350,7 +354,20 @@ class MCTSAgent(Agent):
         curNode = rootNode
         visited = []
 
-        ## YOUR CODE HERE ##
+
+        while not curNode.checkWin():
+            visited.append(curNode)
+            curNodeChildren = curNode.getChildren(visited)
+            unvisitedChildren = []
+            for child in curNodeChildren:
+                if child.n == 0 :
+                    unvisitedChildren.append(child)
+
+            if len(unvisitedChildren) > 0:
+                curNode = random.choice(unvisitedChildren)
+                return curNode
+
+            curNode = self.bestChildUCT(curNode)    
 
         return curNode
 
@@ -361,9 +378,23 @@ class MCTSAgent(Agent):
         c = 1               #c value in the exploration/exploitation equation
         bestChild = None
 
-        ## YOUR CODE HERE ##
+        children = node.getChildren([])
 
+        visitedChildren = []
+        for child in children:
+            if child.n != 0:
+                visitedChildren.append(child)
+        valueChildren = []
 
+        for child in visitedChildren:
+            value = (child.q/child.n) + (c * math.sqrt((2 * math.log(node.n))/child.n))
+            valueChildren.append((child, value))
+        
+        if valueChildren:
+            valueChildren.sort(key=lambda x: x[1], reverse= True)
+            bestChild = valueChildren[0][0]
+        else:
+            bestChild = node             
 
         return bestChild
 
@@ -374,14 +405,24 @@ class MCTSAgent(Agent):
         numRolls = 7        #number of times to rollout to
 
         ## YOUR CODE HERE ##
-
-        return 0
-
-
+        state = node.state.clone()
+        for i in range(numRolls):
+            direction = random.choice(directions)
+            state.update(direction['x'], direction['y'])
+        
+        return node.calcEvalScore(state)
 
      #updates the score all the way up to the root node
     def backpropogation(self, node, score):
-        ## YOUR CODE HERE ##
+        # set up a Node to trace node
+        currNode = node
+
+        # starting with the node propagate up the tree
+        # and update the n and q values
+        while currNode:
+            currNode.n +=1
+            currNode.q +=score
+            currNode = currNode.parent
 
         return
         
